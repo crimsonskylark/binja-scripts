@@ -4,7 +4,9 @@ from ctypes import Structure, c_ulonglong
 
 keys = set()
 strings = {}
-xor_loc = 0
+targets = []
+
+cb: BasicBlock = current_basic_block
 
 
 class uint128_t(Structure):
@@ -30,7 +32,7 @@ def decrypt(var: int, reg: int) -> Union[str, None]:
         return None
 
 
-for insn in current_basic_block.view.mlil_instructions:
+for insn in cb.view.mlil_instructions:
     if insn.operation == MediumLevelILOperation.MLIL_SET_VAR and isinstance(
         insn.src, mediumlevelil.MediumLevelILXor
     ):
@@ -43,7 +45,7 @@ for insn in current_basic_block.view.mlil_instructions:
         xor_loc = insn.address
 
         for prev_insn_idx in range(index, index - 7, -1):
-            prev = list(current_basic_block.view.mlil_instructions)[prev_insn_idx]
+            prev = list(cb.view.mlil_instructions)[prev_insn_idx]
 
             if not isinstance(prev.src, mediumlevelil.MediumLevelILConst):
                 continue
@@ -70,4 +72,4 @@ for s in strings.values():
     print(string, hex(xor_loc))
 
     if string:
-        bv.set_comment_at(xor_loc, string)
+        bv.set_comment_at(xor_loc, f"str: {string}")
